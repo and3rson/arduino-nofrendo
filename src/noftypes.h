@@ -41,18 +41,26 @@
 #define HOST_LITTLE_ENDIAN
 
 #ifdef __GNUC__
+#ifndef INLINE
 #define INLINE static inline
+#endif
 #define ZERO_LENGTH 0
 #elif defined(WIN32)
+#ifndef INLINE
 #define INLINE static __inline
+#endif
 #define ZERO_LENGTH 0
 #else /* crapintosh? */
+#ifndef INLINE
 #define INLINE static
+#endif
 #define ZERO_LENGTH 1
 #endif
 
 /* quell stupid compiler warnings */
+#ifndef UNUSED
 #define UNUSED(x) ((x) = (x))
+#endif
 
 typedef signed char int8;
 typedef signed short int16;
