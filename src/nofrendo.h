@@ -28,6 +28,8 @@
 #ifndef _NOFRENDO_H_
 #define _NOFRENDO_H_
 
+#include <setjmp.h>
+
 typedef enum
 {
    system_unknown,
@@ -49,6 +51,10 @@ extern int main_loop(const char *filename, system_t type);
 extern void main_insert(const char *filename, system_t type);
 extern void main_eject(void);
 extern void main_quit(void);
+
+extern void main_exit(int code);
+
+extern jmp_buf exit_jmp;
 
 #endif /* !_NOFRENDO_H_ */
 

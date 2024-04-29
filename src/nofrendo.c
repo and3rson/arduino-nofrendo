@@ -39,6 +39,9 @@
 /* emulated system includes */
 #include "nes/nes.h"
 
+jmp_buf exit_jmp;
+static bool shutdown_started = false;
+
 /* our global machine structure */
 static struct
 {
@@ -224,7 +227,18 @@ int main_loop(const char *filename, system_t type)
    vidinfo_t video;
 
    /* register shutdown, in case of assertions, etc. */
-     atexit(shutdown_everything);
+   int retcode = setjmp(exit_jmp);
+   if (retcode) {
+     // We're here because of a longjmp
+
+     if (!shutdown_started) {
+       // shutdown_started is set to true in the first call to main_exit
+       // This prevents infinite jmp loop if exit() is called again from within the shutdown code
+       shutdown_started = true;
+       shutdown_everything();
+     }
+     return retcode;
+   }
 
    if (config.open())
       return -1;
@@ -249,6 +263,16 @@ int main_loop(const char *filename, system_t type)
    }
 
    return 0;
+}
+
+/* Replacement for exit() that uses setjmp/longjmp since calling exit() reboots ESP32 */
+void main_exit(int code)
+{
+    if (!code) {
+        // Passing zero to longjmp is a no-no
+        code = 1;
+    }
+    longjmp(exit_jmp, code);
 }
 
 /*

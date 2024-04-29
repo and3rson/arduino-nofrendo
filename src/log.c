@@ -23,12 +23,12 @@
 ** $Id: log.c,v 1.2 2001/04/27 14:37:11 neil Exp $
 */
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 
 #include "noftypes.h"
 #include "log.h"
+#include "nofrendo.h"
 
 #ifdef NOFRENDO_LOG_TO_FILE
 static FILE *errorlog = NULL;
@@ -140,7 +140,7 @@ void nofrendo_log_assert(int expr, int line, const char *file, char *msg)
    else
       nofrendo_log_printf("ASSERT: line %d of %s\n", line, file);
 
-   exit(-1);
+   main_exit(-1);
 }
 
 /*
