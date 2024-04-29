@@ -3,14 +3,14 @@
 **
 **
 ** This program is free software; you can redistribute it and/or
-** modify it under the terms of version 2 of the GNU Library General 
+** modify it under the terms of version 2 of the GNU Library General
 ** Public License as published by the Free Software Foundation.
 **
-** This program is distributed in the hope that it will be useful, 
+** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-** Library General Public License for more details.  To obtain a 
-** copy of the GNU Library General Public License, write to the Free 
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+** Library General Public License for more details.  To obtain a
+** copy of the GNU Library General Public License, write to the Free
 ** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **
 ** Any permitted reproduction of these routines, in whole or in part,
@@ -224,9 +224,9 @@ static void mem_deleteblock(void *data, char *file, int line)
       {
          if (mem_checkguardblock(mem_record[i].block_addr, GUARD_LENGTH))
          {
-            sprintf(fail, "mem_deleteblock 0x%08X at line %d of %s -- block corrupt",
+            sprintf(fail, "mem_deleteblock 0x%08X at line %d of %s -- block corrupt\n",
                     (uint32)data, line, file);
-            ASSERT_MSG(fail);
+            nofrendo_log_print(fail);
          }
 
          memset(&mem_record[i], 0, sizeof(memblock_t));
@@ -258,7 +258,7 @@ void *_my_malloc(int size, char *file, int line)
       // temp = malloc(size);
       temp = mem_alloc(size, true);
 
-   nofrendo_log_printf("_my_malloc: %d at %s:%d\n", size, file, line);
+   nofrendo_log_printf("_my_malloc: %d at %s:%d -> 0x%08X\n", size, file, line, temp);
    if (NULL == temp)
    {
       sprintf(fail, "malloc: out of memory at line %d of %s.  block size: %d\n",
@@ -294,6 +294,15 @@ void _my_free(void **data, char *file, int line)
 
    mem_blockcount--; /* dec our block count */
 
+   uint32 block_size = 0;
+   for (int i = 0; i < MAX_BLOCKS; i++)
+   {
+      if (*data == mem_record[i].block_addr)
+      {
+          block_size = mem_record[i].block_size;
+      }
+   }
+
    if (false != mem_debug)
    {
       mem_deleteblock(*data, file, line);
@@ -303,6 +312,8 @@ void _my_free(void **data, char *file, int line)
    {
       free(*data);
    }
+
+   nofrendo_log_printf("_my_free: %d at %s:%d -> 0x%08X\n", block_size, file, line, (uint32)*data);
 
    *data = NULL; /* NULL our source */
 }

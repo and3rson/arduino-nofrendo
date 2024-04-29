@@ -3,14 +3,14 @@
 **
 **
 ** This program is free software; you can redistribute it and/or
-** modify it under the terms of version 2 of the GNU Library General 
+** modify it under the terms of version 2 of the GNU Library General
 ** Public License as published by the Free Software Foundation.
 **
-** This program is distributed in the hope that it will be useful, 
+** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-** Library General Public License for more details.  To obtain a 
-** copy of the GNU Library General Public License, write to the Free 
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+** Library General Public License for more details.  To obtain a
+** copy of the GNU Library General Public License, write to the Free
 ** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **
 ** Any permitted reproduction of these routines, in whole or in part,
@@ -80,6 +80,11 @@ static void shutdown_everything(void)
    }
 
    config.close();
+   if (console.machine.nes)
+   {
+      nes_poweroff();
+      nes_destroy(&(console.machine.nes));
+   }
    osd_shutdown();
    gui_shutdown();
    vid_shutdown();
@@ -226,14 +231,16 @@ int main_loop(const char *filename, system_t type)
 {
    vidinfo_t video;
 
+   console.machine.nes = NULL;
+
    /* register shutdown, in case of assertions, etc. */
    int retcode = setjmp(exit_jmp);
    if (retcode) {
      // We're here because of a longjmp
 
      if (!shutdown_started) {
-       // shutdown_started is set to true in the first call to main_exit
-       // This prevents infinite jmp loop if exit() is called again from within the shutdown code
+       // shutdown_started is set to true in the first call to main_exit.
+       // This prevents infinite jmp loop if exit() is called again from within the shutdown code.
        shutdown_started = true;
        shutdown_everything();
      }
@@ -241,17 +248,17 @@ int main_loop(const char *filename, system_t type)
    }
 
    if (config.open())
-      return -1;
+      main_exit(-1);
 
    if (osd_init())
-      return -1;
+      main_exit(-1);
 
    if (gui_init())
-      return -1;
+      main_exit(-1);
 
    osd_getvideoinfo(&video);
    if (vid_init(video.default_width, video.default_height, video.driver))
-      return -1;
+      main_exit(-1);
 
    console.nextfilename = NOFRENDO_STRDUP(filename);
    console.nexttype = type;
@@ -259,18 +266,20 @@ int main_loop(const char *filename, system_t type)
    while (false == console.quit)
    {
       if (internal_insert(console.nextfilename, console.nexttype))
-         return 1;
+         main_exit(1);
    }
 
-   return 0;
+   main_exit(0);
+   return 0; // Never reached
 }
 
 /* Replacement for exit() that uses setjmp/longjmp since calling exit() reboots ESP32 */
 void main_exit(int code)
 {
     if (!code) {
-        // Passing zero to longjmp is a no-no
-        code = 1;
+        // Passing zero to longjmp is a no-no.
+        // Let's treat 127 as a special case and use it as success code.
+        code = 127;
     }
     longjmp(exit_jmp, code);
 }

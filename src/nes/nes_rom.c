@@ -507,9 +507,9 @@ void rom_free(rominfo_t **rominfo)
    if ((*rominfo)->sram)
       NOFRENDO_FREE((*rominfo)->sram);
    if ((*rominfo)->rom)
-      NOFRENDO_FREE((*rominfo)->rom);
+      free((*rominfo)->rom);
    if ((*rominfo)->vrom)
-      NOFRENDO_FREE((*rominfo)->vrom);
+      free((*rominfo)->vrom);
    if ((*rominfo)->vram)
       NOFRENDO_FREE((*rominfo)->vram);
 
